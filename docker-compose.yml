@@ -8,6 +8,23 @@ services:
     container_name: otel-demo-app
     ports:
       - "8080:8080"
+    environment:
+      - OTEL_SERVICE_NAME=otel-demo
+
+      # 🔹 Endpoint do OpenTelemetry Collector (já está rodando no compose)
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+
+      # 🔹 Exportadores (definindo o que enviar)
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+
+      # 🔹 Configurações opcionais (melhor estabilidade)
+      - OTEL_TRACES_SAMPLER=parentbased_always_on
+      - OTEL_RESOURCE_ATTRIBUTES=service.version=1.0,deployment.environment=dev
+      - OTEL_INSTRUMENTATION_SPRING_ENABLED=true
+      - OTEL_INSTRUMENTATION_SERVLET_ENABLED=true
+      - OTEL_LOG_LEVEL=debug
     depends_on:
       - otel-collector
     networks:
@@ -49,6 +66,30 @@ services:
       - monitoring
     depends_on:
       - prometheus
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    ports:
+      - "3200:3200"
+    volumes:
+      - ./tempo-data:/var/tempo
+      - ./tempo-config.yml:/etc/tempo-config.yml
+    command: [ "-config.file=/etc/tempo-config.yml" ]
+    networks:
+      - monitoring
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-data:/var/loki
+      - ./loki-config.yml:/etc/loki/local-config.yaml
+    networks:
+      - monitoring
 
 networks:
   monitoring:

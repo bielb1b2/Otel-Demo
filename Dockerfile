@@ -6,6 +6,7 @@ WORKDIR /app
 
 # Copia o JAR da aplicação (gerado pelo Maven)
 COPY target/*.jar app.jar
+COPY opentelemetry-javaagent.jar /otel/agent.jar
 
 # Porta padrão do Spring Boot
 EXPOSE 8080
@@ -14,4 +15,4 @@ EXPOSE 8080
 ENV JAVA_OPTS=""
 
 # Comando para executar o app
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -javaagent:/otel/agent.jar $JAVA_OPTS -jar app.jar"]
